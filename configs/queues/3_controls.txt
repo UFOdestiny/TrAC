@@ -1,0 +1,46 @@
+# Stage 3 - controls (decoding matrix, generation seeds, endpoint latency). Run after stages 1-2
+# (reuses their generation caches).
+# gen_tag | model | dataset | gen_args | ep_out_tag | ep_args | hidden(+nli) | job_name
+# decoding-symmetry matrix on MATH500 + Minerva for all three backbones
+dm_g_math500_qwen8b|qwen8b|math500|--k 1 --temperature 0||--variants pce|0
+dm_t02_math500_qwen8b|qwen8b|math500|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_math500_qwen8b|qwen8b|math500|--k 1 --temperature 1.0||--variants pce|0
+math500_qwen8b_k8|qwen8b|math500|--k 8|math500_qwen8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+dm_g_minerva_qwen8b|qwen8b|minerva|--k 1 --temperature 0||--variants pce|0
+dm_t02_minerva_qwen8b|qwen8b|minerva|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_minerva_qwen8b|qwen8b|minerva|--k 1 --temperature 1.0||--variants pce|0
+minerva_qwen8b_k8|qwen8b|minerva|--k 8|minerva_qwen8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+dm_g_math500_llama8b|llama8b|math500|--k 1 --temperature 0||--variants pce|0
+dm_t02_math500_llama8b|llama8b|math500|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_math500_llama8b|llama8b|math500|--k 1 --temperature 1.0||--variants pce|0
+math500_llama8b_k8|llama8b|math500|--k 8|math500_llama8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+dm_g_minerva_llama8b|llama8b|minerva|--k 1 --temperature 0||--variants pce|0
+dm_t02_minerva_llama8b|llama8b|minerva|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_minerva_llama8b|llama8b|minerva|--k 1 --temperature 1.0||--variants pce|0
+minerva_llama8b_k8|llama8b|minerva|--k 8|minerva_llama8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+dm_g_math500_ministral8b|ministral8b|math500|--k 1 --temperature 0||--variants pce|0
+dm_t02_math500_ministral8b|ministral8b|math500|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_math500_ministral8b|ministral8b|math500|--k 1 --temperature 1.0||--variants pce|0
+math500_ministral8b_k8|ministral8b|math500|--k 8|math500_ministral8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+dm_g_minerva_ministral8b|ministral8b|minerva|--k 1 --temperature 0||--variants pce|0
+dm_t02_minerva_ministral8b|ministral8b|minerva|--k 1 --temperature 0.2||--variants pce|0
+dm_t10_minerva_ministral8b|ministral8b|minerva|--k 1 --temperature 1.0||--variants pce|0
+minerva_ministral8b_k8|ministral8b|minerva|--k 8|minerva_ministral8b_k8_pt0.7|--variants pce --probe-temp 0.7|0
+# generation-seed robustness (primary only) on MATH500 + OlympiadBench
+s2_math500_qwen8b|qwen8b|math500|--k 1 --seed 2||--variants pce|0
+s3_math500_qwen8b|qwen8b|math500|--k 1 --seed 3||--variants pce|0
+s2_olympiad_qwen8b|qwen8b|olympiad|--k 1 --seed 2||--variants pce|0
+s3_olympiad_qwen8b|qwen8b|olympiad|--k 1 --seed 3||--variants pce|0
+s2_math500_llama8b|llama8b|math500|--k 1 --seed 2||--variants pce|0
+s3_math500_llama8b|llama8b|math500|--k 1 --seed 3||--variants pce|0
+s2_olympiad_llama8b|llama8b|olympiad|--k 1 --seed 2||--variants pce|0
+s3_olympiad_llama8b|llama8b|olympiad|--k 1 --seed 3||--variants pce|0
+s2_math500_ministral8b|ministral8b|math500|--k 1 --seed 2||--variants pce|0
+s3_math500_ministral8b|ministral8b|math500|--k 1 --seed 3||--variants pce|0
+s2_olympiad_ministral8b|ministral8b|olympiad|--k 1 --seed 2||--variants pce|0
+s3_olympiad_ministral8b|ministral8b|olympiad|--k 1 --seed 3||--variants pce|0
+# endpoint latency audit (one H200), 64 queries in batches of 16; the trajectory audit runs via scripts/run_stage.sh
+lat_math500_qwen8b|latency||--mode endpoint --gen-tag math500_qwen8b_k8 --n 64 --batch 16 --gpu-mem 0.88|lat_math500_qwen8b||0
+lat_math500_llama8b|latency||--mode endpoint --gen-tag math500_llama8b_k8 --n 64 --batch 16 --gpu-mem 0.88|lat_math500_llama8b||0
+lat_math500_ministral8b|latency||--mode endpoint --gen-tag math500_ministral8b_k8 --n 64 --batch 16 --gpu-mem 0.88|lat_math500_ministral8b||0
+lat_olympiad_qwen8b|latency||--mode endpoint --gen-tag olympiad_qwen8b_k8 --n 64 --batch 16 --gpu-mem 0.88|lat_olympiad_qwen8b||0

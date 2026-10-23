@@ -1,0 +1,28 @@
+# Stage 1 - baselines: generation (K = 8; TUP, log-prob and sampling baselines come from it), P(True),
+# verbalized confidence (SelfDoubt), hidden states (HS-probe, Liu et al.), NLI (SE, SelfCheckGPT, EigV, KLE).
+# Budget: 32768 new tokens for Qwen3-8B (thinking), 16384 for the instruct models.
+# gen_tag | model | dataset | gen_args | ep_out_tag | ep_args | hidden(+nli) | job_name
+olympiad_qwen8b_k8|qwen8b|olympiad|--k 8|olympiad_qwen8b_k8|--variants ptrue,verbconf|1|olympiad_qwen8b_k8__base
+olympiad_llama8b_k8|llama8b|olympiad|--k 8|olympiad_llama8b_k8|--variants ptrue,verbconf|1|olympiad_llama8b_k8__base
+olympiad_ministral8b_k8|ministral8b|olympiad|--k 8|olympiad_ministral8b_k8|--variants ptrue,verbconf|1|olympiad_ministral8b_k8__base
+aime3_qwen8b_k8|qwen8b|aime3|--k 8|aime3_qwen8b_k8|--variants ptrue,verbconf|1|aime3_qwen8b_k8__base
+aime3_llama8b_k8|llama8b|aime3|--k 8|aime3_llama8b_k8|--variants ptrue,verbconf|1|aime3_llama8b_k8__base
+aime3_ministral8b_k8|ministral8b|aime3|--k 8|aime3_ministral8b_k8|--variants ptrue,verbconf|1|aime3_ministral8b_k8__base
+math500_qwen8b_k8|qwen8b|math500|--k 8|math500_qwen8b_k8|--variants ptrue,verbconf|1|math500_qwen8b_k8__base
+math500_llama8b_k8|llama8b|math500|--k 8|math500_llama8b_k8|--variants ptrue,verbconf|1|math500_llama8b_k8__base
+math500_ministral8b_k8|ministral8b|math500|--k 8|math500_ministral8b_k8|--variants ptrue,verbconf|1|math500_ministral8b_k8__base
+minerva_qwen8b_k8|qwen8b|minerva|--k 8|minerva_qwen8b_k8|--variants ptrue,verbconf|1|minerva_qwen8b_k8__base
+minerva_llama8b_k8|llama8b|minerva|--k 8|minerva_llama8b_k8|--variants ptrue,verbconf|1|minerva_llama8b_k8__base
+minerva_ministral8b_k8|ministral8b|minerva|--k 8|minerva_ministral8b_k8|--variants ptrue,verbconf|1|minerva_ministral8b_k8__base
+gsm8k_qwen8b_k8|qwen8b|gsm8k|--k 8|gsm8k_qwen8b_k8|--variants ptrue,verbconf|1|gsm8k_qwen8b_k8__base
+gsm8k_llama8b_k8|llama8b|gsm8k|--k 8|gsm8k_llama8b_k8|--variants ptrue,verbconf|1|gsm8k_llama8b_k8__base
+gsm8k_ministral8b_k8|ministral8b|gsm8k|--k 8|gsm8k_ministral8b_k8|--variants ptrue,verbconf|1|gsm8k_ministral8b_k8__base
+gpqa_diamond_qwen8b_k8|qwen8b|gpqa_diamond|--k 8|gpqa_diamond_qwen8b_k8|--variants ptrue,verbconf|1|gpqa_diamond_qwen8b_k8__base
+gpqa_diamond_llama8b_k8|llama8b|gpqa_diamond|--k 8|gpqa_diamond_llama8b_k8|--variants ptrue,verbconf|1|gpqa_diamond_llama8b_k8__base
+gpqa_diamond_ministral8b_k8|ministral8b|gpqa_diamond|--k 8|gpqa_diamond_ministral8b_k8|--variants ptrue,verbconf|1|gpqa_diamond_ministral8b_k8__base
+mmlupro_qwen8b_k8|qwen8b|mmlupro|--k 8|mmlupro_qwen8b_k8|--variants ptrue,verbconf|1|mmlupro_qwen8b_k8__base
+mmlupro_llama8b_k8|llama8b|mmlupro|--k 8|mmlupro_llama8b_k8|--variants ptrue,verbconf|1|mmlupro_llama8b_k8__base
+mmlupro_ministral8b_k8|ministral8b|mmlupro|--k 8|mmlupro_ministral8b_k8|--variants ptrue,verbconf|1|mmlupro_ministral8b_k8__base
+triviaqa_qwen8b_k8|qwen8b|triviaqa|--k 8|triviaqa_qwen8b_k8|--variants ptrue,verbconf|1|triviaqa_qwen8b_k8__base
+triviaqa_llama8b_k8|llama8b|triviaqa|--k 8|triviaqa_llama8b_k8|--variants ptrue,verbconf|1|triviaqa_llama8b_k8__base
+triviaqa_ministral8b_k8|ministral8b|triviaqa|--k 8|triviaqa_ministral8b_k8|--variants ptrue,verbconf|1|triviaqa_ministral8b_k8__base

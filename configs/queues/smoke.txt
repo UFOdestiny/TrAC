@@ -1,0 +1,7 @@
+# Smoke test: 12 questions from every benchmark, all baselines, on each backbone.
+# gen_tag | model | dataset | gen_args | ep_out_tag | ep_args | hidden(+nli)
+smoke_llama8b|llama8b|mix:gsm8k,math500,minerva,olympiad,aime3,gpqa_diamond,mmlupro,triviaqa:12|--k 8|||1
+smoke_ministral8b|ministral8b|mix:gsm8k,math500,minerva,olympiad,aime3,gpqa_diamond,mmlupro,triviaqa:12|--k 8|||1
+smoke_qwen8b|qwen8b|mix:gsm8k,math500,minerva,olympiad,aime3,gpqa_diamond,mmlupro,triviaqa:12|--k 8|||1
+smoke_qwen8b|qwen8b|mix:gsm8k,math500,minerva,olympiad,aime3,gpqa_diamond,mmlupro,triviaqa:12|--k 8|smoke_qwen8b_pt0.7|--variants pce --probe-temp 0.7|0
+smoke_dm_g_llama8b|llama8b|mix:math500:16|--k 1 --temperature 0||--variants pce|0

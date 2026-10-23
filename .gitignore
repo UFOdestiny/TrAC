@@ -1,71 +1,13 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-*.egg-info/
-dist/
 build/
-.eggs/
-*.egg
-
-# Virtual environments
-venv/
-env/
-.venv/
-
-# IDE and editor files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# System files
-.DS_Store
-Thumbs.db
-
-# Runtime outputs
-artifacts/
-outputs/
-checkpoints/
-logs/
-wandb/
-
-# Cached data and package caches
-.cache/
-hf_cache/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.ipynb_checkpoints/
-
-# Large data artifacts
-*.arrow
-*.parquet
-
-# Model weights
-*.pth
-*.pt
-*.bin
-*.safetensors
-*.gguf
-
-# Logs
-*.log
-*.err
-slurm-*.out
-
-# Secrets / local
 .env
 .env.*
 !.env.example
+data/
+models
+notes/
+*.log
+*.parquet
+.vscode/
 .claude*
-.codex
-CLAUDE.md
-.agent*
-latex
-
-# Local symlink to shared model/data storage
-popllm
-visualization
+ccfa-workfiles/
+latex/

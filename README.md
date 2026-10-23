@@ -1,61 +1,109 @@
-# TrAC: Trace-Conditioned Answer Consistency for Efficient Uncertainty Quantification in LLMs
+# TrAC: Trace-Conditioned Answer Consistency
 
-Judge-free, single-trace uncertainty quantification (UQ) for mathematical
-reasoning LLMs. TrAC reads whether a model still **re-commits** to the answer it
-returned, from **one completed reasoning trace**, instead of resampling many full
-trajectories.
-TrAC combines two orthogonal single-trace views under a shared lightweight head:
+**Uncertainty quantification for reasoning LLMs from one completed trace.**
 
-- **PCE — Prefix-Conditioned Elicitation (active).** Re-elicit a short answer at the
-  *completed* reasoning prefix (`The final answer is \boxed{...}`) and represent
-  its **agreement** with the originally returned answer together with its
-  **likelihood** and **confidence**. Because the reasoning prefix is unchanged,
-  this reuses the vLLM KV cache and decodes only a short answer suffix — about
-  **2% added latency**, not a second generation.
-- **TUP — Trace Uncertainty Profile (passive).** Summarize token-level
-  uncertainty already available from the primary generation (binned log-prob and
-  entropy shape, slopes, extrema, low-confidence fraction). No extra decoding.
+TrAC asks whether a model keeps re-committing to the answer it returned while it reads its own
+reasoning. Instead of sampling many full trajectories, it decodes short answers from the KV cache
+of a single trace and combines them with signals the original generation already provides.
 
-Correctness labels come from a **deterministic verifier** (`math_verify` for math,
-exact option-letter match for multiple choice).
+| View | What it measures | Extra cost |
+|---|---|---|
+| **PCE**, Prefix-Conditioned Elicitation (active) | At 20 checkpoints along the trace and at the completed prefix, re-elicit a short answer after `The final answer is \boxed{` (1 greedy + 4 sampled) and score the teacher-forced likelihood of the returned answer. | short decodes over the cached prefix |
+| **TUP**, Trace Uncertainty Profile (passive) | Binned token log-probability and entropy, slopes, extrema, answer-region confidence. | none |
 
-## Setup
+- **TrAC-0** is the training-free score: the share of re-elicited answers that equal the returned answer, averaged along the trace.
+- **TrAC** fuses PCE and TUP with a cross-fitted stacked head (logistic regression + gradient boosting).
+- Correctness labels always come from deterministic verifiers (`math_verify`, option letters, alias match). No LLM judge is used anywhere.
+
+## Results
+
+These are macro averages over 22 settings: 3 backbones × 8 benchmarks, minus the two AIME settings that have fewer than ten correct answers. Latency is the median wall-clock relative to one generation, counting every query the scores use.
+
+| Method | Budget | AUROC ↑ | Latency |
+|---|---|---|---|
+| SelfDoubt | one trace | 0.652 | ≈1.0× |
+| **TrAC-0** (training-free) | one trace | **0.722** | 1.04× |
+| TUP (passive only) | one trace | 0.765 | 1.00× |
+| **TrAC** | one trace | **0.811** | 1.06× |
+| Liu et al. (2024), hidden states | one trace, white-box | 0.823 | 1.00× |
+| **TrAC + HS** | one trace, white-box | **0.842** | 1.06× |
+| SC@8 | 8 traces | 0.864 | 3.85× |
+| **TrAC + CF@8** | 8 traces | **0.882** | 3.91× |
+
+Backbones: Qwen3-8B (thinking), Llama-3.1-8B-Instruct, Ministral-8B-Instruct-2410. Benchmarks:
+GSM8K, MATH500, Minerva, OlympiadBench, AIME 2024–2026, GPQA-Diamond, MMLU-Pro, and TriviaQA.
+
+## Installation
 
 ```bash
-pip install -r requirements.txt          # torch, vllm, transformers, scikit-learn, math_verify, ...
-cp .env.example .env                      # then edit the paths below
+git clone <this repository> trac && cd trac
+pip install -e ".[gpu,data,dev]"     # CPU analysis only: pip install -e .
+cp .env.example .env                 # then set MODELS_ROOT, DATASETS_ROOT, EXP_ROOT, PAPER_DIR
+python scripts/download_data.py      # benchmark mirrors -> $DATASETS_ROOT (GPQA is gated)
+pytest                               # CPU unit tests
 ```
 
-All paths are read from a gitignored `.env` (anonymized; no absolute user paths
-in code):
+Every path comes from `.env`, and no code contains an absolute path. Variables already set in the
+environment override `.env`.
 
-```ini
-MODELS_ROOT=/path/to/models              # dir of local model folders (names match --model)
-DATASETS_ROOT=/path/to/hf_datasets_hub   # HuggingFace datasets cache
-EXP_ROOT=/path/to/experiment_outputs     # all caches, results, and logs land here
-```
+| Variable | Meaning |
+|---|---|
+| `MODELS_ROOT` | one folder per model, named as in [`trac/backbones.py`](trac/backbones.py), plus `deberta-large-mnli` |
+| `DATASETS_ROOT` | benchmark mirrors written by `scripts/download_data.py` |
+| `EXP_ROOT` | all caches, scores, and logs ([layout](docs/artifacts.md)) |
+| `PAPER_DIR` | LaTeX project that receives `table/*.tex` and `figures/*.pdf` |
+| `PYTHON` | interpreter used by `scripts/*.sh` (optional) |
 
 ## Quick start
 
-```bash
-# 1. build the generation + probe matrix (GPU); idempotent / resumable
-CUDA_VISIBLE_DEVICES=0 bash scripts/build_matrix.sh scripts/matrix.txt
-
-# 2. add the ARC likelihood, P(True), and teacher-forced probes for each cell
-CUDA_VISIBLE_DEVICES=0 bash scripts/rebuttal_worker.sh scripts/matrix.txt
-CUDA_VISIBLE_DEVICES=0 bash scripts/tforce_worker.sh  scripts/matrix.txt
-
-
-Or drive a single stage directly (everything is a `python -m` module):
+Score one benchmark with one backbone (one GPU):
 
 ```bash
-python -m recue.generate --model Qwen3-8B --dataset math500 --k 8 --tag math500_qwen8b_k8
-python -m recue.probe    --model Qwen3-8B --gen-tag math500_qwen8b_k8
-python -m scripts.run_probe_confidence --model Qwen3-8B --gen-tag math500_qwen8b_k8
-python -m scripts.build_cache
-python -m experiments.recompute_headline
+python -m trac.pipeline.generate   --model qwen8b --dataset math500 --tag math500_qwen8b_k8   # trace + 7 samples
+python -m trac.pipeline.endpoint   --gen-tag math500_qwen8b_k8                               # completed-prefix probes
+python -m trac.pipeline.trajectory --gen-tag math500_qwen8b_k8                               # checkpoint probes
+python -m trac.analysis.features   --tags math500_qwen8b_k8
+python -m trac.analysis.scores     --tag math500_qwen8b_k8 --only "TrAC|TUP"
 ```
+
+Each GPU stage infers the backbone from the cache tag and writes one artifact per tag under
+`EXP_ROOT`. A stage skips any tag whose output already exists.
+
+Reproduce the paper (full matrix: two H200 GPUs, about 50 GPU-hours):
+
+```bash
+bash scripts/run_queue.sh configs/queues/1_baselines.txt,configs/queues/2_trac.txt,configs/queues/3_controls.txt 0,1
+bash scripts/run_stage.sh trajectory 0 <tags...>          # also sample_trajectory, prefix_consistency
+bash scripts/run_analysis.sh                             # CPU: features -> scores -> tables and figures
+```
+
+[`docs/reproduction.md`](docs/reproduction.md) lists every step, its cost, and the exact cell lists.
+
+## Repository layout
+
+```
+trac/
+  config.py          paths from .env and the EXP_ROOT layout
+  backbones.py       backbone registry, reasoning formats, token-exact prefixes
+  prompts.py         prompt templates, answer cues, self-assessment questions
+  answers.py         answer extraction, typed equivalence, deterministic verification
+  datasets.py        benchmark loaders
+  store.py, metrics.py
+  pipeline/          GPU stages (vLLM / transformers), one module per stage + a shared job queue
+  analysis/          CPU stages: features, heads, method registry, scores, controls, comparisons
+  paper/             tables and figures of the paper
+configs/queues/      job lists for the multi-GPU queue
+scripts/             launchers (queue, per-stage, CPU analysis, SLURM), data download
+tests/               CPU unit tests
+docs/                method, reproduction guide, artifact layout
+```
+
+## Documentation
+
+- [`docs/method.md`](docs/method.md): signals, features, heads, evaluation protocol, and the method registry.
+- [`docs/reproduction.md`](docs/reproduction.md): end-to-end runbook for the GPU and CPU stages.
+- [`docs/artifacts.md`](docs/artifacts.md): what every stage writes under `EXP_ROOT`, and the file schemas.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT, see [`LICENSE`](LICENSE). Models and datasets keep their own licenses.
