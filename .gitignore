@@ -8,21 +8,38 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
 
-# Local inputs and outputs
-data/
-models
-outputs/
-*.log
-slurm-*.out
+# Companion code that is not released: baselines, paper analyses, paper tables and figures
+baselines/
+analysis/
+visualization/
 
 # Private workspace
+docs/
 notes/
 latex/
 ccfa-workfiles/
 
-# Editors and operating system
+# Local inputs and outputs (folders or symlinks)
+data/
+datasets/
+models
+outputs
+results/
+artifacts/
+logs/
+store
+*.log
+slurm-*.out
+
+# Editors, agents, and operating system
 .vscode/
 .idea/
+.claude/
 .claude*
+.agents/
+.codex/
 .DS_Store

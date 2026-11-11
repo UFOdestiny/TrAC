@@ -1,5 +1,5 @@
 """Download the benchmark files into DATASETS_ROOT (flat mirrors `org_name/`, as read by
-trac.datasets). Requires `huggingface_hub`; GPQA is gated, so accept its terms on the Hub
+rewind.datasets). Requires `huggingface_hub`; GPQA is gated, so accept its terms on the Hub
 and log in (`huggingface-cli login`) first.
 
   python scripts/download_data.py [--only gsm8k,math500,...]
@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from trac.config import DATASETS_ROOT  # noqa: E402
+from rewind.config import DATASETS_ROOT  # noqa: E402
 
-# benchmark tags (trac.datasets) -> (Hub dataset repo, files to fetch)
+# benchmark tags (rewind.datasets) -> (Hub dataset repo, files to fetch)
 SOURCES = {
     "gsm8k": [("openai/gsm8k", ["main/test-*.parquet"])],
     "math500": [("HuggingFaceH4/MATH-500", ["test.jsonl"])],

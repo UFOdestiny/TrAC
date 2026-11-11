@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Launch one detached queue worker per GPU on shared queue files (resumable).
-#   bash scripts/run_queue.sh configs/queues/main.txt[,configs/queues/new_backbone.txt] [gpus, default 0]
-# Comma-separated queue files run in order on every worker. Logs: $EXP_ROOT/logs/queue_<first queue>_gpu<i>.log
+# Launch one detached queue worker per GPU on the shared job queue (resumable).
+#   bash scripts/run_queue.sh main[,new_backbone] [gpus, default 0]
+# Comma-separated matrices run in order on every worker (rewind.pipeline.queue).
+# Logs: $EXP_ROOT/logs/queue_<first matrix>_gpu<i>.log
 set -eu
 source "$(dirname "$0")/env.sh"
-QUEUE="${1:?usage: run_queue.sh <queue files, comma-separated> [gpus, default 0]}"
+MATRICES="${1:?usage: run_queue.sh <matrices: main, new_backbone, comma-separated> [gpus, default 0]}"
 GPUS="${2:-0}"
-NAME="$(basename "${QUEUE%%,*}" .txt)"
+NAME="${MATRICES%%,*}"
 for g in ${GPUS//,/ }; do
-  CUDA_VISIBLE_DEVICES="$g" nohup "$PY" -m trac.pipeline.queue "$QUEUE" > "$EXP_ROOT/logs/queue_${NAME}_gpu${g}.log" 2>&1 &
+  CUDA_VISIBLE_DEVICES="$g" nohup "$PY" -m rewind.pipeline.queue "$MATRICES" > "$EXP_ROOT/logs/queue_${NAME}_gpu${g}.log" 2>&1 &
   echo "worker gpu$g pid $! -> $EXP_ROOT/logs/queue_${NAME}_gpu${g}.log"
   sleep "${QUEUE_START_DELAY:-30}"   # stagger engine start-up
 done

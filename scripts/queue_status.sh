@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# Read-only report on queue workers: active stages, GPUs, per-queue progress, failed jobs, disk.
-#   bash scripts/queue_status.sh [queue files, default configs/queues/main.txt and new_backbone.txt]
+# Read-only report on queue workers: active stages, GPUs, per-matrix progress, failed jobs, disk.
+#   bash scripts/queue_status.sh [matrices, default: main new_backbone]
 source "$(dirname "$0")/env.sh"
 if [ "$#" -gt 0 ]; then
-  QUEUES=("$@")
+  MATRICES=("$@")
 else
-  QUEUES=(configs/queues/main.txt configs/queues/new_backbone.txt)
+  MATRICES=(main new_backbone)
 fi
 echo "== $(date '+%F %T')"
 echo "-- active stages"
-ps -eo pid,etime,args | grep -E "python -m trac\.pipeline\." | grep -v grep | cut -c1-150
+ps -eo pid,etime,args | grep -E "python -m (rewind|baselines|analysis)\.pipeline\." | grep -v grep | cut -c1-150
 echo "-- GPUs"
 nvidia-smi --query-gpu=index,memory.used,utilization.gpu,temperature.gpu --format=csv,noheader 2>/dev/null
 echo "-- progress (done / failed / total jobs)"
-for f in "${QUEUES[@]}"; do
-  "$PY" - "$f" <<'PY'
+for m in "${MATRICES[@]}"; do
+  "$PY" - "$m" <<'PY'
 import sys
-from trac.pipeline.queue import parse, state
-jobs = [j["job"] for j in parse(sys.argv[1])]
-states = [state(j) for j in jobs]
-failed = [j for j, s in zip(jobs, states) if s == "failed"]
-print(f"  {sys.argv[1]}: {states.count('done')} done / {len(failed)} failed / {len(jobs)}")
+from rewind.pipeline.queue import jobs, state
+names = [j["job"] for j in jobs(sys.argv[1])]
+states = [state(j) for j in names]
+failed = [j for j, s in zip(names, states) if s == "failed"]
+print(f"  {sys.argv[1]}: {states.count('done')} done / {len(failed)} failed / {len(names)}")
 for j in failed:
     print(f"    failed: {j}")
 PY
